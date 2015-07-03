@@ -21,7 +21,6 @@ import java.awt.Graphics;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.net.URL;
-import java.math.BigDecimal;
 
 public class Manga {
 
