@@ -25,6 +25,9 @@ public class Manga extends JFrame implements ActionListener {
     /**
      * @param args the command line arguments
      */
+    
+    public static Document doc = null;
+    public static JPanel pane = new JPanel();
     public Manga(){
         this.setLayout(new BorderLayout());
         this.setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
@@ -38,7 +41,33 @@ public class Manga extends JFrame implements ActionListener {
         prev.addActionListener(  
             new ActionListener()  {
                 public void actionPerformed(ActionEvent e) {
-                    System.out.println("Previous clicked");
+                    String l = doc.title();
+                    System.out.println("Title " + l);
+                    Element el = doc.select("div.moderation_bar.rounded.clear>ul>li>a").get(2);
+                    l = el.attr("href");
+                    System.out.println(l);
+                    try{
+                        doc = Jsoup.connect(l).get();
+                        Element e1 = doc.select("img#comic_page").first();
+                        String attr = e1.attr("src");
+                        System.out.println(attr);
+                        URL url = new URL(attr);
+                        BufferedImage image = ImageIO.read(url);
+                        Manga.this.remove(pane);
+                        pane.removeAll();
+                        pane = new JPanel() {
+                            @Override
+                            protected void paintComponent(Graphics g) {
+                                super.paintComponent(g);
+                                g.drawImage(image, 0, 0, getWidth(), getHeight(), this);
+                            }
+                        };
+                        Manga.this.add(pane);
+                        Manga.this.revalidate();
+                    }
+                    catch(IOException i){
+                        System.out.println("IO exception");
+                    }
                 }
             }
         );
@@ -46,7 +75,31 @@ public class Manga extends JFrame implements ActionListener {
         next.addActionListener(  
             new ActionListener()  {
                 public void actionPerformed(ActionEvent e) {
-                    System.out.println("Next clicked");
+                    Element el = doc.select("div.moderation_bar.rounded.clear>ul>li>a").get(3);
+                    String l = el.attr("href");
+                    System.out.println(l);
+                    try{
+                        doc = Jsoup.connect(l).get();
+                        Element e1 = doc.select("img#comic_page").first();
+                        String attr = e1.attr("src");
+                        System.out.println(attr);
+                        URL url = new URL(attr);
+                        BufferedImage image = ImageIO.read(url);
+                        pane.removeAll();
+                        Manga.this.remove(pane);
+                        pane = new JPanel() {
+                            @Override
+                            protected void paintComponent(Graphics g) {
+                                super.paintComponent(g);
+                                g.drawImage(image, 0, 0, getWidth(), getHeight(), this);
+                            }
+                        };
+                        Manga.this.add(pane);
+                        Manga.this.revalidate();
+                    }
+                    catch(IOException i){
+                        System.out.println("IO exception");
+                    }
                 }
             }
         );
@@ -58,7 +111,7 @@ public class Manga extends JFrame implements ActionListener {
 
     public static void main(String[] args)throws IOException {
         
-        Document doc = Jsoup.connect("http://bato.to/comic/_/comics/prison-school-r1011").get();
+        doc = Jsoup.connect("http://bato.to/comic/_/comics/prison-school-r1011").get();
         String title = doc.title();
         System.out.println("Title is: " + title);
         Elements e = doc.select("tr.row.lang_English.chapter_row");
@@ -66,19 +119,20 @@ public class Manga extends JFrame implements ActionListener {
         String attr = row.attr("href");
         System.out.println(attr);
         doc = Jsoup.connect(attr).get();
+        Manga window = new Manga();
         title = doc.title();
         System.out.println("Title is: " + title);
         Element e1 = doc.select("img#comic_page").first();
         System.out.println(e1.attr("src"));
         attr = e1.attr("src");
         
-        Manga window = new Manga();
         URL url = new URL(attr);
+        
         BufferedImage image = ImageIO.read(url);
         int h = image.getHeight();
         int w = image.getWidth();
         
-        JPanel pane = new JPanel() {
+        pane = new JPanel() {
             @Override
             protected void paintComponent(Graphics g) {
                 super.paintComponent(g);
