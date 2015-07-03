@@ -13,20 +13,49 @@ import org.jsoup.select.Elements;
 import java.awt.*;
 import java.awt.event.*;
 import javax.swing.*;
+import javax.swing.event.*;
 import javax.imageio.ImageIO;
-import javax.swing.JFrame;
-import javax.swing.JPanel;
-import javax.swing.WindowConstants;
 import java.awt.Graphics;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.net.URL;
 
-public class Manga {
+public class Manga extends JFrame implements ActionListener {
 
     /**
      * @param args the command line arguments
      */
+    public Manga(){
+        this.setLayout(new BorderLayout());
+        this.setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
+        this.setSize(1920, 1040);
+        JPanel control = new JPanel();
+        JButton prev = new JButton("Previous");
+        JButton next = new JButton ("Next");
+        control.add(prev);
+        control.add(next);
+        this.add(control, BorderLayout.SOUTH);
+        prev.addActionListener(  
+            new ActionListener()  {
+                public void actionPerformed(ActionEvent e) {
+                    System.out.println("Previous clicked");
+                }
+            }
+        );
+        
+        next.addActionListener(  
+            new ActionListener()  {
+                public void actionPerformed(ActionEvent e) {
+                    System.out.println("Next clicked");
+                }
+            }
+        );
+    }
+    
+    public void actionPerformed(ActionEvent e) {
+        
+    }
+
     public static void main(String[] args)throws IOException {
         
         Document doc = Jsoup.connect("http://bato.to/comic/_/comics/prison-school-r1011").get();
@@ -42,16 +71,13 @@ public class Manga {
         Element e1 = doc.select("img#comic_page").first();
         System.out.println(e1.attr("src"));
         attr = e1.attr("src");
-        JFrame frame = new JFrame();
-        frame.setLayout(new BorderLayout());
-        frame.setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
         
-        
+        Manga window = new Manga();
         URL url = new URL(attr);
         BufferedImage image = ImageIO.read(url);
         int h = image.getHeight();
         int w = image.getWidth();
-        frame.setSize(1920, 1040);
+        
         JPanel pane = new JPanel() {
             @Override
             protected void paintComponent(Graphics g) {
@@ -59,12 +85,8 @@ public class Manga {
                 g.drawImage(image, 0, 0, getWidth(), getHeight(), this);
             }
         };
-        frame.add(pane, BorderLayout.CENTER);
-        JPanel control = new JPanel();
-        control.add(new Button("Previous"));
-        control.add(new Button("Next"));
-        frame.add(control, BorderLayout.SOUTH);
-        frame.setVisible(true);
+        window.add(pane, BorderLayout.CENTER);
+        window.setVisible(true);
         //String img = (attr.substring( attr.indexOf("http://"), attr.indexOf(")") ) );
         /*Element column = row.select("td>a").first();
         String chapters = column.attr("href");
