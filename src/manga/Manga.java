@@ -61,35 +61,10 @@ public class Manga {
         };
         frame.add(pane, BorderLayout.CENTER);
         JPanel control = new JPanel();
-        JPanel padLeft = new JPanel();
-        JPanel padRight = new JPanel();
-        System.out.println("Width: " + (frame.getWidth() - w)/2);
-        int ratio = 0;
-        double dratio = (double)968/(double)851;
-        System.out.println("Actual Ratio: " + dratio);
-        if (image.getHeight() > 968){
-            System.out.println("Image shrunk: " + ratio);
-            ratio = 968/h;
-            padLeft.setPreferredSize(new Dimension((frame.getWidth() - (w * ratio))/2, frame.getHeight()));
-            padRight.setPreferredSize(new Dimension((frame.getWidth() - (w * ratio))/2, frame.getHeight()));
-        }
-        else if (image.getHeight() < 968){
-            ratio = 968/h;
-            System.out.println("Image enlarged: " + h + ", " + ratio);
-            padLeft.setPreferredSize(new Dimension((frame.getWidth() - (w * ratio))/2, frame.getHeight()));
-            padRight.setPreferredSize(new Dimension((frame.getWidth() - (w * ratio))/2, frame.getHeight()));
-        }
-        else {
-            padLeft.setPreferredSize(new Dimension((frame.getWidth() - w)/2, frame.getHeight()));
-            padRight.setPreferredSize(new Dimension((frame.getWidth() - w)/2, frame.getHeight())); 
-        }
         control.add(new Button("Previous"));
         control.add(new Button("Next"));
         frame.add(control, BorderLayout.SOUTH);
-        frame.add(padLeft, BorderLayout.WEST);
-        frame.add(padRight, BorderLayout.EAST);
         frame.setVisible(true);
-        System.out.println("Height: " + (pane.getHeight()));
         //String img = (attr.substring( attr.indexOf("http://"), attr.indexOf(")") ) );
         /*Element column = row.select("td>a").first();
         String chapters = column.attr("href");
