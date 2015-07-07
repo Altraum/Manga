@@ -31,8 +31,11 @@ public class Manga extends JFrame implements ActionListener {
     public static JPanel pane = new JPanel();
     public static JPanel padLeft = new JPanel();
     public static JPanel padRight = new JPanel();
-    public static String [] chapterArray;
+    public static String[] chapterArray;
     public static String[] pageArray;
+    public static JComboBox chapterList;
+    public static JComboBox pageList;
+    public static boolean actionListenerState;
     public Manga(){
         this.setLayout(new BorderLayout());
         this.setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
@@ -40,8 +43,8 @@ public class Manga extends JFrame implements ActionListener {
         JPanel control = new JPanel();
         JButton prev = new JButton("Previous");
         JButton next = new JButton ("Next");
-        JComboBox chapterList = new JComboBox(chapterArray);
-        JComboBox pageList = new JComboBox();
+        chapterList = new JComboBox(chapterArray);
+        pageList = new JComboBox(pageArray);
         control.add(prev);
         control.add(chapterList);
         control.add(pageList);
@@ -165,11 +168,59 @@ public class Manga extends JFrame implements ActionListener {
                         Dimension d = new Dimension(((1920 - r)/2),h);
                         padLeft.setPreferredSize(d);
                         padRight.setPreferredSize(d);
+                        actionListenerState=false;
+                        pageList.removeAllItems();
+                        actionListenerState=true;
+                        fillPages();
+                        for (int count = 0; count < pageArray.length; count++){
+                            System.out.println("Page " + (count+1));
+                            pageList.addItem(pageArray[count]);
+                        }
+                        System.out.println("First pageList: " + pageList.getItemAt(0));
                         Manga.this.add(pane);
                         Manga.this.revalidate();
                     }
                     catch(IOException i){
                         System.out.println("IO exception");
+                    }
+                    
+                }
+            }
+        );
+        pageList.addActionListener(  
+            new ActionListener()  {
+                public void actionPerformed(ActionEvent e) {
+                    if(actionListenerState){
+                        try{
+                            System.out.println("Web page selected :" + pageList.getSelectedItem().toString());
+                            doc = Jsoup.connect(pageList.getSelectedItem().toString()).get();
+                            Element e1 = doc.select("img#comic_page").first();
+                            String attr = e1.attr("src");
+                            System.out.println(attr);
+                            URL url = new URL(attr);
+                            BufferedImage image = ImageIO.read(url);
+                            int h = image.getHeight();
+                            int w = image.getWidth();
+                            int r = ratioWidth(w, h);
+                            pane.removeAll();
+                            Manga.this.remove(pane);
+                            pane = new JPanel() {
+                                @Override
+                                protected void paintComponent(Graphics g) {
+                                    super.paintComponent(g);
+                                    g.drawImage(image, 0, 0, getWidth(), getHeight(), this);
+                                }
+                            };
+                            System.out.println(r);
+                            Dimension d = new Dimension(((1920 - r)/2),h);
+                            padLeft.setPreferredSize(d);
+                            padRight.setPreferredSize(d);
+                            Manga.this.add(pane);
+                            Manga.this.revalidate();
+                        }
+                        catch(IOException i){
+                            System.out.println("IO exception");
+                        }  
                     }
                 }
             }
@@ -209,10 +260,22 @@ public class Manga extends JFrame implements ActionListener {
             index++;
         }
         System.out.println("...fillChapters finished");
+        fillPages();
     }
     
-    public void fillPages(){
-    
+    public static void fillPages(){
+        System.out.print("fillPages start...");
+        Element cssParse = doc.select("div.moderation_bar.rounded.clear>ul>li>select[name=page_select]").first();
+        Elements pages = cssParse.select("option");
+        int index = 0;
+        pageArray = new String[pages.size()];
+        while(index < pages.size()){
+            System.out.print("Method start " + (index +1) + ": ");
+            pageArray[index] = (pages.get(index).attr("value"));
+            System.out.println(pageArray[index]);
+            index++;
+        }
+        System.out.println("...fillPages finished");
     }
     
     public void actionPerformed(ActionEvent e) {
