@@ -35,6 +35,7 @@ public class Manga extends JFrame implements ActionListener {
     public static String[] pageArray;
     public static JComboBox chapterList;
     public static JComboBox pageList;
+    public static JList searchResults;
     public static boolean actionListenerState;
     public Manga(){
         this.setLayout(new BorderLayout());
@@ -91,6 +92,8 @@ public class Manga extends JFrame implements ActionListener {
                     catch(IOException i){
                         System.out.println("IO exception");
                     }
+                    int index = pageList.getSelectedIndex();
+                    pageList.setSelectedIndex(index-1);
                 }
             }
         );
@@ -98,10 +101,10 @@ public class Manga extends JFrame implements ActionListener {
         next.addActionListener(  
             new ActionListener()  {
                 public void actionPerformed(ActionEvent e) {
+                    
                     int count = 0;
                     Element el = doc.select("div.moderation_bar.rounded.clear>ul>li>a>img").get(count);
                     while(!el.attr("title").equals("Next Page") ){
-                        el = el.parent();
                         count++;
                         el = doc.select("div.moderation_bar.rounded.clear>ul>li>a>img").get(count);
                         System.out.println(el.attr("title"));
@@ -137,6 +140,8 @@ public class Manga extends JFrame implements ActionListener {
                     catch(IOException i){
                         System.out.println("IO exception");
                     }
+                    int index = pageList.getSelectedIndex();
+                    pageList.setSelectedIndex(index+1);
                 }
             }
                 
@@ -183,7 +188,8 @@ public class Manga extends JFrame implements ActionListener {
                     catch(IOException i){
                         System.out.println("IO exception");
                     }
-                    
+                    int index = pageList.getSelectedIndex();
+                    pageList.setSelectedIndex(index);
                 }
             }
         );
@@ -281,10 +287,106 @@ public class Manga extends JFrame implements ActionListener {
     public void actionPerformed(ActionEvent e) {
         
     }
+    
+    
 
     public static void main(String[] args)throws IOException {
-        
-        doc = Jsoup.connect("http://bato.to/comic/_/comics/prison-school-r1011").get();
+        String chapterInfo[][] = new String[2][30];
+        JFrame main = new JFrame();
+        main.setLayout(new BorderLayout());
+        main.setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
+        main.setSize(640, 480);
+        JPanel search = new JPanel();
+        JTextField searchInput = new JTextField();
+        searchInput.setColumns(35);
+        JButton selectBtn = new JButton("Select");
+        main.add(selectBtn, BorderLayout.SOUTH);
+        JButton searchBtn = new JButton("Search");
+        DefaultListModel listmodel = new DefaultListModel();
+        search.add(searchInput);
+        search.add(searchBtn);
+        selectBtn.addActionListener(
+            new ActionListener()  {
+                public void actionPerformed(ActionEvent e) {
+                    try{
+                        String selectedManga = chapterInfo[1][searchResults.getSelectedIndex()];
+                        doc = Jsoup.connect(selectedManga).get();
+                        String title = doc.title();
+                        System.out.println("Title is: " + title);
+                        Elements ele = doc.select("tr.row.lang_English.chapter_row");
+                        Elements row = ele.select("td>a");
+                        String attr = row.attr("href");
+                        System.out.println(attr);
+                        doc = Jsoup.connect(attr).get();
+                        fillChapters();
+                        Manga window = new Manga();
+                        title = doc.title();
+                        System.out.println("Title is: " + title);
+                        Element e1 = doc.select("img#comic_page").first();
+                        System.out.println(e1.attr("src"));
+                        attr = e1.attr("src");
+
+                        URL url = new URL(attr);
+
+                        BufferedImage image = ImageIO.read(url);
+                        int h = image.getHeight();
+                        int w = image.getWidth();
+
+                        pane = new JPanel() {
+                            @Override
+                            protected void paintComponent(Graphics g) {
+                                super.paintComponent(g);
+                                g.drawImage(image, 0, 0, getWidth(), getHeight(), this);
+                            }
+                        };
+                        Dimension d = new Dimension((1920 - w)/2,h);
+                        padLeft.setBackground(Color.black);
+                        padRight.setBackground(Color.black);
+                        padLeft.setPreferredSize(d);
+                        padRight.setPreferredSize(d);
+                        window.add(padLeft, BorderLayout.WEST);
+                        window.add(padRight, BorderLayout.EAST);
+                        window.add(pane, BorderLayout.CENTER);
+                        window.setVisible(true);
+                    }
+                    
+                    catch(IOException i){
+                        System.out.println("IO Exception");
+                    }
+                }
+            }
+        );
+        searchBtn.addActionListener(
+            new ActionListener()  {
+                public void actionPerformed(ActionEvent e) {
+                    try{
+                        String mangaToFind = searchInput.getText();
+                        doc = Jsoup.connect("http://bato.to/search?name_cond=c&name=" + mangaToFind).get();
+                        Elements mangaResults = doc.select("div#comic_search_results>table.ipb_table.chapters_list>tbody>tr>td>strong>a");
+                        listmodel.removeAllElements();
+                        for(int run = 0; run<=29; run++){
+                            if(run<mangaResults.size()){
+                                chapterInfo[0][run] = mangaResults.get(run).text();
+                                chapterInfo[1][run] = mangaResults.get(run).attr("href");
+                                listmodel.addElement(chapterInfo[0][run]);
+                            }
+                        }
+                        searchResults = new JList(listmodel); 
+                        JScrollPane scrollPane = new JScrollPane(searchResults, JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED, JScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED);
+                        main.remove(scrollPane);
+                        main.add(scrollPane, BorderLayout.CENTER);
+                        main.revalidate();
+                    }
+                    
+                    catch(IOException i){
+                        System.out.println("IO Exception");
+                    }
+                }
+            }
+        );
+        main.add(search, BorderLayout.NORTH);
+        main.setVisible(true);
+        /*doc = Jsoup.connect("http://bato.to/comic/_/comics/prison-school-r1011").get();
         String title = doc.title();
         System.out.println("Title is: " + title);
         Elements e = doc.select("tr.row.lang_English.chapter_row");
@@ -321,6 +423,6 @@ public class Manga extends JFrame implements ActionListener {
         window.add(padLeft, BorderLayout.WEST);
         window.add(padRight, BorderLayout.EAST);
         window.add(pane, BorderLayout.CENTER);
-        window.setVisible(true);
+        window.setVisible(true);*/
     }
 }
