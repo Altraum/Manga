@@ -33,19 +33,22 @@ public class Manga extends JFrame implements ActionListener {
     public static JPanel padRight = new JPanel();
     public static String[] chapterArray;
     public static String[] pageArray;
+    public static String[] chapterInfo;
+    public static String[] pageInfo;
     public static JComboBox chapterList;
     public static JComboBox pageList;
     public static JList searchResults;
     public static boolean actionListenerState;
     public Manga(){
         this.setLayout(new BorderLayout());
-        this.setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
+        this.setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
         this.setSize(1920, 1040);
+        
         JPanel control = new JPanel();
         JButton prev = new JButton("Previous");
         JButton next = new JButton ("Next");
-        chapterList = new JComboBox(chapterArray);
-        pageList = new JComboBox(pageArray);
+        chapterList = new JComboBox(chapterInfo);
+        pageList = new JComboBox(pageInfo);
         control.add(prev);
         control.add(chapterList);
         control.add(pageList);
@@ -150,8 +153,8 @@ public class Manga extends JFrame implements ActionListener {
             new ActionListener()  {
                 public void actionPerformed(ActionEvent e) {
                     try{
-                        System.out.println("Web page selected :" + chapterList.getSelectedItem().toString());
-                        doc = Jsoup.connect(chapterList.getSelectedItem().toString()).get();
+                        System.out.println("Web page selected :" + chapterArray[chapterList.getSelectedIndex()]);
+                        doc = Jsoup.connect(chapterArray[chapterList.getSelectedIndex()]).get();
                         Element e1 = doc.select("img#comic_page").first();
                         String attr = e1.attr("src");
                         System.out.println(attr);
@@ -179,7 +182,7 @@ public class Manga extends JFrame implements ActionListener {
                         fillPages();
                         for (int count = 0; count < pageArray.length; count++){
                             System.out.println("Page " + (count+1));
-                            pageList.addItem(pageArray[count]);
+                            pageList.addItem(pageInfo[count]);
                         }
                         System.out.println("First pageList: " + pageList.getItemAt(0));
                         Manga.this.add(pane);
@@ -198,8 +201,8 @@ public class Manga extends JFrame implements ActionListener {
                 public void actionPerformed(ActionEvent e) {
                     if(actionListenerState){
                         try{
-                            System.out.println("Web page selected :" + pageList.getSelectedItem().toString());
-                            doc = Jsoup.connect(pageList.getSelectedItem().toString()).get();
+                            System.out.println("Web page selected :" + pageArray[pageList.getSelectedIndex()]);
+                            doc = Jsoup.connect(pageArray[pageList.getSelectedIndex()]).get();
                             Element e1 = doc.select("img#comic_page").first();
                             String attr = e1.attr("src");
                             System.out.println(attr);
@@ -233,7 +236,7 @@ public class Manga extends JFrame implements ActionListener {
         );
     }
     
-    public int ratioWidth(int w, int h){
+    public static int ratioWidth(int w, int h){
         int rWidth;
         float r;
         if ( h > 968){
@@ -259,9 +262,11 @@ public class Manga extends JFrame implements ActionListener {
         Elements chapters = cssParse.select("option");
         int index = 0;
         chapterArray = new String[chapters.size()];
+        chapterInfo = new String[chapters.size()];
         while(index < chapters.size()){
             System.out.print("Method start " + (index +1) + ": ");
             chapterArray[index] = (chapters.get(index).attr("value"));
+            chapterInfo[index] = (chapters.get(index).text());
             System.out.println(chapterArray[index]);
             index++;
         }
@@ -275,9 +280,11 @@ public class Manga extends JFrame implements ActionListener {
         Elements pages = cssParse.select("option");
         int index = 0;
         pageArray = new String[pages.size()];
+        pageInfo = new String[pages.size()];
         while(index < pages.size()){
             System.out.print("Method start " + (index +1) + ": ");
             pageArray[index] = (pages.get(index).attr("value"));
+            pageInfo[index] = (pages.get(index).text());
             System.out.println(pageArray[index]);
             index++;
         }
@@ -291,7 +298,7 @@ public class Manga extends JFrame implements ActionListener {
     
 
     public static void main(String[] args)throws IOException {
-        String chapterInfo[][] = new String[2][30];
+        String[][] mangaInfo = new String[2][30];
         JFrame main = new JFrame();
         main.setLayout(new BorderLayout());
         main.setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
@@ -305,11 +312,10 @@ public class Manga extends JFrame implements ActionListener {
         DefaultListModel listmodel = new DefaultListModel();
         search.add(searchInput);
         search.add(searchBtn);
-        selectBtn.addActionListener(
-            new ActionListener()  {
+        selectBtn.addActionListener(new ActionListener()  {
                 public void actionPerformed(ActionEvent e) {
                     try{
-                        String selectedManga = chapterInfo[1][searchResults.getSelectedIndex()];
+                        String selectedManga = mangaInfo[1][searchResults.getSelectedIndex()];
                         doc = Jsoup.connect(selectedManga).get();
                         String title = doc.title();
                         System.out.println("Title is: " + title);
@@ -331,7 +337,7 @@ public class Manga extends JFrame implements ActionListener {
                         BufferedImage image = ImageIO.read(url);
                         int h = image.getHeight();
                         int w = image.getWidth();
-
+                        int r = ratioWidth(w, h);
                         pane = new JPanel() {
                             @Override
                             protected void paintComponent(Graphics g) {
@@ -339,7 +345,7 @@ public class Manga extends JFrame implements ActionListener {
                                 g.drawImage(image, 0, 0, getWidth(), getHeight(), this);
                             }
                         };
-                        Dimension d = new Dimension((1920 - w)/2,h);
+                        Dimension d = new Dimension((1920 - r)/2,h);
                         padLeft.setBackground(Color.black);
                         padRight.setBackground(Color.black);
                         padLeft.setPreferredSize(d);
@@ -356,8 +362,7 @@ public class Manga extends JFrame implements ActionListener {
                 }
             }
         );
-        searchBtn.addActionListener(
-            new ActionListener()  {
+        searchBtn.addActionListener(new ActionListener()  {
                 public void actionPerformed(ActionEvent e) {
                     try{
                         String mangaToFind = searchInput.getText();
@@ -366,9 +371,9 @@ public class Manga extends JFrame implements ActionListener {
                         listmodel.removeAllElements();
                         for(int run = 0; run<=29; run++){
                             if(run<mangaResults.size()){
-                                chapterInfo[0][run] = mangaResults.get(run).text();
-                                chapterInfo[1][run] = mangaResults.get(run).attr("href");
-                                listmodel.addElement(chapterInfo[0][run]);
+                                mangaInfo[0][run] = mangaResults.get(run).text();
+                                mangaInfo[1][run] = mangaResults.get(run).attr("href");
+                                listmodel.addElement(mangaInfo[0][run]);
                             }
                         }
                         searchResults = new JList(listmodel); 
@@ -386,43 +391,5 @@ public class Manga extends JFrame implements ActionListener {
         );
         main.add(search, BorderLayout.NORTH);
         main.setVisible(true);
-        /*doc = Jsoup.connect("http://bato.to/comic/_/comics/prison-school-r1011").get();
-        String title = doc.title();
-        System.out.println("Title is: " + title);
-        Elements e = doc.select("tr.row.lang_English.chapter_row");
-        Elements row = e.select("td>a");
-        String attr = row.attr("href");
-        System.out.println(attr);
-        doc = Jsoup.connect(attr).get();
-        fillChapters();
-        Manga window = new Manga();
-        title = doc.title();
-        System.out.println("Title is: " + title);
-        Element e1 = doc.select("img#comic_page").first();
-        System.out.println(e1.attr("src"));
-        attr = e1.attr("src");
-        
-        URL url = new URL(attr);
-        
-        BufferedImage image = ImageIO.read(url);
-        int h = image.getHeight();
-        int w = image.getWidth();
-        
-        pane = new JPanel() {
-            @Override
-            protected void paintComponent(Graphics g) {
-                super.paintComponent(g);
-                g.drawImage(image, 0, 0, getWidth(), getHeight(), this);
-            }
-        };
-        Dimension d = new Dimension((1920 - w)/2,h);
-        padLeft.setBackground(Color.black);
-        padRight.setBackground(Color.black);
-        padLeft.setPreferredSize(d);
-        padRight.setPreferredSize(d);
-        window.add(padLeft, BorderLayout.WEST);
-        window.add(padRight, BorderLayout.EAST);
-        window.add(pane, BorderLayout.CENTER);
-        window.setVisible(true);*/
     }
 }
