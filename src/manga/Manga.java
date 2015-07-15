@@ -318,46 +318,51 @@ public class Manga extends JFrame implements ActionListener {
         selectBtn.addActionListener(new ActionListener()  {
                 public void actionPerformed(ActionEvent e) {
                     try{
-                        System.out.println("search Results " + searchResults.getSelectedValue());
-                        String selectedManga = mangaInfo[1][searchResults.getSelectedIndex()];
-                        doc = Jsoup.connect(selectedManga).get();
-                        String title = doc.title();
-                        System.out.println("Title is: " + title);
-                        Elements ele = doc.select("tr.row.lang_English.chapter_row");
-                        Elements row = ele.select("td>a");
-                        String attr = row.attr("href");
-                        System.out.println(attr);
-                        doc = Jsoup.connect(attr).get();
-                        fillChapters();
-                        Manga window = new Manga();
-                        title = doc.title();
-                        System.out.println("Title is: " + title);
-                        Element e1 = doc.select("img#comic_page").first();
-                        System.out.println(e1.attr("src"));
-                        attr = e1.attr("src");
+                        if(!doc.select("table.chapters_list>tbody>tr:nth-child(" + ((searchResults.getSelectedIndex()*2)+2) + ")>td:nth-child(6)").text().equals("--"))
+                        {
+                            String selectedManga = mangaInfo[1][searchResults.getSelectedIndex()];
+                            doc = Jsoup.connect(selectedManga).get();
+                            String title = doc.title();
+                            System.out.println("Title is: " + title);
+                            Elements ele = doc.select("tr.row.lang_English.chapter_row");
+                            Elements row = ele.select("td>a");
+                            String attr = row.attr("href");
+                            System.out.println(attr);
+                            doc = Jsoup.connect(attr).get();
+                            fillChapters();
+                            Manga window = new Manga();
+                            title = doc.title();
+                            System.out.println("Title is: " + title);
+                            Element e1 = doc.select("img#comic_page").first();
+                            System.out.println(e1.attr("src"));
+                            attr = e1.attr("src");
 
-                        URL url = new URL(attr);
+                            URL url = new URL(attr);
 
-                        BufferedImage image = ImageIO.read(url);
-                        int h = image.getHeight();
-                        int w = image.getWidth();
-                        int r = ratioWidth(w, h);
-                        pane = new JPanel() {
-                            @Override
-                            protected void paintComponent(Graphics g) {
-                                super.paintComponent(g);
-                                g.drawImage(image, 0, 0, getWidth(), getHeight(), this);
-                            }
-                        };
-                        Dimension d = new Dimension((1920 - r)/2,h);
-                        padLeft.setBackground(Color.black);
-                        padRight.setBackground(Color.black);
-                        padLeft.setPreferredSize(d);
-                        padRight.setPreferredSize(d);
-                        window.add(padLeft, BorderLayout.WEST);
-                        window.add(padRight, BorderLayout.EAST);
-                        window.add(pane, BorderLayout.CENTER);
-                        window.setVisible(true);
+                            BufferedImage image = ImageIO.read(url);
+                            int h = image.getHeight();
+                            int w = image.getWidth();
+                            int r = ratioWidth(w, h);
+                            pane = new JPanel() {
+                                @Override
+                                protected void paintComponent(Graphics g) {
+                                    super.paintComponent(g);
+                                    g.drawImage(image, 0, 0, getWidth(), getHeight(), this);
+                                }
+                            };
+                            Dimension d = new Dimension((1920 - r)/2,h);
+                            padLeft.setBackground(Color.black);
+                            padRight.setBackground(Color.black);
+                            padLeft.setPreferredSize(d);
+                            padRight.setPreferredSize(d);
+                            window.add(padLeft, BorderLayout.WEST);
+                            window.add(padRight, BorderLayout.EAST);
+                            window.add(pane, BorderLayout.CENTER);
+                            window.setVisible(true);
+                        }
+                        else{
+                            JOptionPane.showMessageDialog(null, "No chapters available", "No Chapters", JOptionPane.INFORMATION_MESSAGE);
+                        }
                     }
                     
                     catch(IOException i){
