@@ -37,7 +37,8 @@ public class Manga extends JFrame implements ActionListener {
     public static String[] pageInfo;
     public static JComboBox chapterList;
     public static JComboBox pageList;
-    public static JList searchResults;
+    public static DefaultListModel listmodel = new DefaultListModel();
+    public static JList searchResults = new JList(listmodel);
     public static boolean actionListenerState;
     public Manga(){
         this.setLayout(new BorderLayout());
@@ -299,6 +300,8 @@ public class Manga extends JFrame implements ActionListener {
 
     public static void main(String[] args)throws IOException {
         String[][] mangaInfo = new String[2][30];
+        JScrollPane scrollPane = new JScrollPane(searchResults, JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED, JScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED);
+        scrollPane.setVisible(false);
         JFrame main = new JFrame();
         main.setLayout(new BorderLayout());
         main.setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
@@ -307,14 +310,15 @@ public class Manga extends JFrame implements ActionListener {
         JTextField searchInput = new JTextField();
         searchInput.setColumns(35);
         JButton selectBtn = new JButton("Select");
+        main.add(scrollPane, BorderLayout.CENTER);
         main.add(selectBtn, BorderLayout.SOUTH);
         JButton searchBtn = new JButton("Search");
-        DefaultListModel listmodel = new DefaultListModel();
         search.add(searchInput);
         search.add(searchBtn);
         selectBtn.addActionListener(new ActionListener()  {
                 public void actionPerformed(ActionEvent e) {
                     try{
+                        System.out.println("search Results " + searchResults.getSelectedValue());
                         String selectedManga = mangaInfo[1][searchResults.getSelectedIndex()];
                         doc = Jsoup.connect(selectedManga).get();
                         String title = doc.title();
@@ -374,12 +378,14 @@ public class Manga extends JFrame implements ActionListener {
                                 mangaInfo[0][run] = mangaResults.get(run).text();
                                 mangaInfo[1][run] = mangaResults.get(run).attr("href");
                                 listmodel.addElement(mangaInfo[0][run]);
+                                System.out.println("Found  manga " + (run+1) + " at " + mangaInfo[1][run]);
                             }
                         }
-                        searchResults = new JList(listmodel); 
-                        JScrollPane scrollPane = new JScrollPane(searchResults, JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED, JScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED);
-                        main.remove(scrollPane);
-                        main.add(scrollPane, BorderLayout.CENTER);
+                        System.out.println("listmodel size: " + listmodel.getSize());
+                        System.out.println("searchResults size = " + searchResults.getModel().getSize());
+                        if(!scrollPane.isVisible()){
+                            scrollPane.setVisible(true);
+                        }
                         main.revalidate();
                     }
                     
