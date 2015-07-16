@@ -321,60 +321,76 @@ public class Manga extends JFrame implements ActionListener {
         selectBtn.addActionListener(new ActionListener()  {
                 public void actionPerformed(ActionEvent e) {
                     try{
-                        if(!doc.select("table.chapters_list>tbody>tr:nth-child(" + ((searchResults.getSelectedIndex()*2)+2) + ")>td:nth-child(6)").text().equals("--"))
-                        {
-                            String selectedManga = mangaInfo[1][searchResults.getSelectedIndex()];
-                            doc = Jsoup.connect(selectedManga).get();
-                            String title = doc.title();
-                            System.out.println("Title is: " + title);
-                            Element ele = doc.select("tr.row.lang_English.chapter_row").last();
-                            Elements row = ele.select("td>a");
-                            String attr = row.attr("href");
-                            System.out.println(attr);
-                            while(attr.equals(null)){
-                                ele = doc.select("tr.row.lang_English.chapter_row").last();
-                                row = ele.select("td>a");
-                                attr = row.attr("href");
-                            }
-                            doc = Jsoup.connect(attr).get();
-                            fillChapters();
-                            Manga window = new Manga();
-                            title = doc.title();
-                            System.out.println("Title is: " + title);
-                            Element e1 = doc.select("img#comic_page").first();
-                            System.out.println(e1.attr("src"));
-                            attr = e1.attr("src");
+                        if(searchResults.getSelectedIndex() != -1){
+                            if(!doc.select("table.chapters_list>tbody>tr:nth-child(" + ((searchResults.getSelectedIndex()*2)+2) + ")>td:nth-child(6)").text().equals("--"))
+                            {
+                                System.out.println(searchResults.getSelectedIndex());
+                                String selectedManga = mangaInfo[1][searchResults.getSelectedIndex()];
+                                doc = Jsoup.connect(selectedManga).get();
+                                String title = doc.title();
+                                System.out.println("Title is: " + title);
+                                if(!doc.select("tr.row.lang_English.chapter_row").html().equals("")){
+                                    System.out.println(doc.select("tr.row.lang_English.chapter_row").text());
+                                    Element ele = doc.select("tr.row.lang_English.chapter_row").last();
+                                    Elements row = ele.select("td>a");
+                                    String attr = row.attr("href");
+                                    System.out.println("Attribute incoming");
+                                    System.out.println(attr);
+                                    int tries = 0;
+                                    while(attr.equals("")){
+                                        System.out.println("Attempt " + tries);
+                                        ele = doc.select("tr.row.lang_English.chapter_row").last();
+                                        row = ele.select("td>a");
+                                        attr = row.attr("href");
+                                        tries++;
+                                    }
+                                    doc = Jsoup.connect(attr).get();
+                                    fillChapters();
+                                    Manga window = new Manga();
+                                    title = doc.title();
+                                    System.out.println("Title is: " + title);
+                                    Element e1 = doc.select("img#comic_page").first();
+                                    System.out.println(e1.attr("src"));
+                                    attr = e1.attr("src");
 
-                            URL url = new URL(attr);
+                                    URL url = new URL(attr);
 
-                            BufferedImage image = ImageIO.read(url);
-                            int h = image.getHeight();
-                            int w = image.getWidth();
-                            int r = ratioWidth(w, h);
-                            pane = new JPanel() {
-                                @Override
-                                protected void paintComponent(Graphics g) {
-                                    super.paintComponent(g);
-                                    g.drawImage(image, 0, 0, getWidth(), getHeight(), this);
+                                    BufferedImage image = ImageIO.read(url);
+                                    int h = image.getHeight();
+                                    int w = image.getWidth();
+                                    int r = ratioWidth(w, h);
+                                    pane = new JPanel() {
+                                        @Override
+                                        protected void paintComponent(Graphics g) {
+                                            super.paintComponent(g);
+                                            g.drawImage(image, 0, 0, getWidth(), getHeight(), this);
+                                        }
+                                    };
+                                    Dimension d = new Dimension((1920 - r)/2,h);
+                                    padLeft.setBackground(Color.black);
+                                    padRight.setBackground(Color.black);
+                                    padLeft.setPreferredSize(d);
+                                    padRight.setPreferredSize(d);
+                                    window.add(padLeft, BorderLayout.WEST);
+                                    window.add(padRight, BorderLayout.EAST);
+                                    window.add(pane, BorderLayout.CENTER);
+                                    window.setVisible(true); 
                                 }
-                            };
-                            Dimension d = new Dimension((1920 - r)/2,h);
-                            padLeft.setBackground(Color.black);
-                            padRight.setBackground(Color.black);
-                            padLeft.setPreferredSize(d);
-                            padRight.setPreferredSize(d);
-                            window.add(padLeft, BorderLayout.WEST);
-                            window.add(padRight, BorderLayout.EAST);
-                            window.add(pane, BorderLayout.CENTER);
-                            window.setVisible(true);
+                                else{
+                                    JOptionPane.showMessageDialog(null, "No English Chapters Available", "No English", JOptionPane.INFORMATION_MESSAGE);
+                                }
+                            }
+                            else{
+                                JOptionPane.showMessageDialog(null, "No chapters available", "No Chapters", JOptionPane.INFORMATION_MESSAGE);
+                            }
                         }
                         else{
-                            JOptionPane.showMessageDialog(null, "No chapters available", "No Chapters", JOptionPane.INFORMATION_MESSAGE);
+                            JOptionPane.showMessageDialog(null, "Please choose a manga from the results of your search.", "No Manga Selected", JOptionPane.INFORMATION_MESSAGE);
                         }
                     }
                     
                     catch(IOException i){
-                        System.out.println("IO Exception");
+                        JOptionPane.showMessageDialog(null, "Connection Lost. Please try again.", "No Connection", JOptionPane.INFORMATION_MESSAGE);
                     }
                 }
             }
