@@ -310,6 +310,7 @@ public class Manga extends JFrame implements ActionListener {
         JTextField searchInput = new JTextField();
         searchInput.setColumns(35);
         JButton selectBtn = new JButton("Select");
+        selectBtn.setEnabled(false);
         main.add(scrollPane, BorderLayout.CENTER);
         main.add(selectBtn, BorderLayout.SOUTH);
         JButton searchBtn = new JButton("Search");
@@ -324,7 +325,7 @@ public class Manga extends JFrame implements ActionListener {
                             doc = Jsoup.connect(selectedManga).get();
                             String title = doc.title();
                             System.out.println("Title is: " + title);
-                            Elements ele = doc.select("tr.row.lang_English.chapter_row");
+                            Element ele = doc.select("tr.row.lang_English.chapter_row").last();
                             Elements row = ele.select("td>a");
                             String attr = row.attr("href");
                             System.out.println(attr);
@@ -390,6 +391,9 @@ public class Manga extends JFrame implements ActionListener {
                         System.out.println("searchResults size = " + searchResults.getModel().getSize());
                         if(!scrollPane.isVisible()){
                             scrollPane.setVisible(true);
+                        }
+                        if(!selectBtn.isEnabled()){
+                            selectBtn.setEnabled(true);
                         }
                         main.revalidate();
                     }
