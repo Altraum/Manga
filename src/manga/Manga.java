@@ -39,7 +39,7 @@ public class Manga extends JFrame implements ActionListener {
     public static JComboBox pageList;
     public static DefaultListModel listmodel = new DefaultListModel();
     public static JList searchResults = new JList(listmodel);
-    public static boolean actionListenerState;
+    public static boolean actionListenerState = true;
     public Manga(){
         this.setLayout(new BorderLayout());
         this.setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
@@ -49,6 +49,7 @@ public class Manga extends JFrame implements ActionListener {
         JButton prev = new JButton("Previous");
         JButton next = new JButton ("Next");
         chapterList = new JComboBox(chapterInfo);
+        chapterList.setSelectedIndex(chapterList.getItemCount()-1);
         pageList = new JComboBox(pageInfo);
         control.add(prev);
         control.add(chapterList);
@@ -200,6 +201,7 @@ public class Manga extends JFrame implements ActionListener {
         pageList.addActionListener(  
             new ActionListener()  {
                 public void actionPerformed(ActionEvent e) {
+                    System.out.println(actionListenerState);
                     if(actionListenerState){
                         try{
                             System.out.println("Web page selected :" + pageArray[pageList.getSelectedIndex()]);
@@ -329,6 +331,11 @@ public class Manga extends JFrame implements ActionListener {
                             Elements row = ele.select("td>a");
                             String attr = row.attr("href");
                             System.out.println(attr);
+                            while(attr.equals(null)){
+                                ele = doc.select("tr.row.lang_English.chapter_row").last();
+                                row = ele.select("td>a");
+                                attr = row.attr("href");
+                            }
                             doc = Jsoup.connect(attr).get();
                             fillChapters();
                             Manga window = new Manga();
