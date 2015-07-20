@@ -13,24 +13,14 @@ import org.jsoup.select.Elements;
 import java.awt.*;
 import java.awt.event.*;
 import javax.swing.*;
-import javax.swing.event.*;
-import javax.imageio.ImageIO;
-import java.awt.Graphics;
 import java.awt.image.BufferedImage;
-import java.io.File;
-import java.net.URL;
-import java.math.*;
+import java.awt.GraphicsEnvironment;
 
 public class Manga extends JFrame implements ActionListener {
-
-    /**
-     * @param args the command line arguments
-     */
     
     public static Document doc = null;
-    public static JPanel pane = new JPanel();
-    public static JPanel padLeft = new JPanel();
-    public static JPanel padRight = new JPanel();
+    public static Document buffer = null;
+    public static PaintImage pane = new PaintImage();
     public static String[] chapterArray;
     public static String[] pageArray;
     public static String[] chapterInfo;
@@ -40,11 +30,11 @@ public class Manga extends JFrame implements ActionListener {
     public static DefaultListModel listmodel = new DefaultListModel();
     public static JList searchResults = new JList(listmodel);
     public static boolean actionListenerState = true;
+    public static BufferedImage image;
     public Manga(){
         this.setLayout(new BorderLayout());
         this.setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
-        this.setSize(1920, 1040);
-        
+        this.setSize((int)GraphicsEnvironment.getLocalGraphicsEnvironment().getMaximumWindowBounds().getWidth(),(int)GraphicsEnvironment.getLocalGraphicsEnvironment().getMaximumWindowBounds().getHeight());
         JPanel control = new JPanel();
         JButton prev = new JButton("Previous");
         JButton next = new JButton ("Next");
@@ -74,25 +64,11 @@ public class Manga extends JFrame implements ActionListener {
                         Element e1 = doc.select("img#comic_page").first();
                         String attr = e1.attr("src");
                         System.out.println(attr);
-                        URL url = new URL(attr);
-                        BufferedImage image = ImageIO.read(url);
-                        int h = image.getHeight();
-                        int w = image.getWidth();
-                        int r = ratioWidth(w, h);
-                        Manga.this.remove(pane);
                         pane.removeAll();
-                        pane = new JPanel() {
-                            @Override
-                            protected void paintComponent(Graphics g) {
-                                super.paintComponent(g);
-                                g.drawImage(image, 0, 0, getWidth(), getHeight(), this);
-                            }
-                        };
-                        Dimension d = new Dimension(((1920 - r)/2), 968);
-                        padLeft.setPreferredSize(d);
-                        padRight.setPreferredSize(d);
-                        Manga.this.add(pane);
+                        pane.setImage(attr);
+                        pane.waitForImage();
                         Manga.this.revalidate();
+                        Manga.this.repaint();
                     }
                     catch(IOException i){
                         System.out.println("IO exception");
@@ -121,26 +97,11 @@ public class Manga extends JFrame implements ActionListener {
                         Element e1 = doc.select("img#comic_page").first();
                         String attr = e1.attr("src");
                         System.out.println(attr);
-                        URL url = new URL(attr);
-                        BufferedImage image = ImageIO.read(url);
-                        int h = image.getHeight();
-                        int w = image.getWidth();
-                        int r = ratioWidth(w, h);
                         pane.removeAll();
-                        Manga.this.remove(pane);
-                        pane = new JPanel() {
-                            @Override
-                            protected void paintComponent(Graphics g) {
-                                super.paintComponent(g);
-                                g.drawImage(image, 0, 0, getWidth(), getHeight(), this);
-                            }
-                        };
-                        System.out.println(r);
-                        Dimension d = new Dimension(((1920 - r)/2),h);
-                        padLeft.setPreferredSize(d);
-                        padRight.setPreferredSize(d);
-                        Manga.this.add(pane);
+                        pane.setImage(attr);
+                        pane.waitForImage();
                         Manga.this.revalidate();
+                        Manga.this.repaint();
                     }
                     catch(IOException i){
                         System.out.println("IO exception");
@@ -160,24 +121,8 @@ public class Manga extends JFrame implements ActionListener {
                         Element e1 = doc.select("img#comic_page").first();
                         String attr = e1.attr("src");
                         System.out.println(attr);
-                        URL url = new URL(attr);
-                        BufferedImage image = ImageIO.read(url);
-                        int h = image.getHeight();
-                        int w = image.getWidth();
-                        int r = ratioWidth(w, h);
                         pane.removeAll();
-                        Manga.this.remove(pane);
-                        pane = new JPanel() {
-                            @Override
-                            protected void paintComponent(Graphics g) {
-                                super.paintComponent(g);
-                                g.drawImage(image, 0, 0, getWidth(), getHeight(), this);
-                            }
-                        };
-                        System.out.println(r);
-                        Dimension d = new Dimension(((1920 - r)/2),h);
-                        padLeft.setPreferredSize(d);
-                        padRight.setPreferredSize(d);
+                        pane.setImage(attr);
                         actionListenerState=false;
                         pageList.removeAllItems();
                         actionListenerState=true;
@@ -187,8 +132,9 @@ public class Manga extends JFrame implements ActionListener {
                             pageList.addItem(pageInfo[count]);
                         }
                         System.out.println("First pageList: " + pageList.getItemAt(0));
-                        Manga.this.add(pane);
+                        pane.waitForImage();
                         Manga.this.revalidate();
+                        Manga.this.repaint();
                     }
                     catch(IOException i){
                         System.out.println("IO exception");
@@ -209,26 +155,11 @@ public class Manga extends JFrame implements ActionListener {
                             Element e1 = doc.select("img#comic_page").first();
                             String attr = e1.attr("src");
                             System.out.println(attr);
-                            URL url = new URL(attr);
-                            BufferedImage image = ImageIO.read(url);
-                            int h = image.getHeight();
-                            int w = image.getWidth();
-                            int r = ratioWidth(w, h);
                             pane.removeAll();
-                            Manga.this.remove(pane);
-                            pane = new JPanel() {
-                                @Override
-                                protected void paintComponent(Graphics g) {
-                                    super.paintComponent(g);
-                                    g.drawImage(image, 0, 0, getWidth(), getHeight(), this);
-                                }
-                            };
-                            System.out.println(r);
-                            Dimension d = new Dimension(((1920 - r)/2),h);
-                            padLeft.setPreferredSize(d);
-                            padRight.setPreferredSize(d);
-                            Manga.this.add(pane);
+                            pane.setImage(attr);
+                            pane.waitForImage();
                             Manga.this.revalidate();
+                            Manga.this.repaint();
                         }
                         catch(IOException i){
                             System.out.println("IO exception");
@@ -324,7 +255,6 @@ public class Manga extends JFrame implements ActionListener {
                         if(searchResults.getSelectedIndex() != -1){
                             if(!doc.select("table.chapters_list>tbody>tr:nth-child(" + ((searchResults.getSelectedIndex()*2)+2) + ")>td:nth-child(6)").text().equals("--"))
                             {
-                                System.out.println(searchResults.getSelectedIndex());
                                 String selectedManga = mangaInfo[1][searchResults.getSelectedIndex()];
                                 doc = Jsoup.connect(selectedManga).get();
                                 String title = doc.title();
@@ -352,27 +282,9 @@ public class Manga extends JFrame implements ActionListener {
                                     Element e1 = doc.select("img#comic_page").first();
                                     System.out.println(e1.attr("src"));
                                     attr = e1.attr("src");
-
-                                    URL url = new URL(attr);
-
-                                    BufferedImage image = ImageIO.read(url);
-                                    int h = image.getHeight();
-                                    int w = image.getWidth();
-                                    int r = ratioWidth(w, h);
-                                    pane = new JPanel() {
-                                        @Override
-                                        protected void paintComponent(Graphics g) {
-                                            super.paintComponent(g);
-                                            g.drawImage(image, 0, 0, getWidth(), getHeight(), this);
-                                        }
-                                    };
-                                    Dimension d = new Dimension((1920 - r)/2,h);
-                                    padLeft.setBackground(Color.black);
-                                    padRight.setBackground(Color.black);
-                                    padLeft.setPreferredSize(d);
-                                    padRight.setPreferredSize(d);
-                                    window.add(padLeft, BorderLayout.WEST);
-                                    window.add(padRight, BorderLayout.EAST);
+                                    pane.removeAll();
+                                    pane.setImage(attr);
+                                    pane.waitForImage();
                                     window.add(pane, BorderLayout.CENTER);
                                     window.setVisible(true); 
                                 }
