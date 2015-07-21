@@ -28,6 +28,7 @@ public class Manga extends JFrame implements ActionListener {
     public static String[] pageInfo;
     public static JComboBox chapterList;
     public static JComboBox pageList;
+    public static JLabel loadStatus = new JLabel("Unset");
     public static DefaultListModel listmodel = new DefaultListModel();
     public static JList searchResults = new JList(listmodel);
     public static boolean actionListenerState = true;
@@ -64,6 +65,7 @@ public class Manga extends JFrame implements ActionListener {
         control.add(chapterList);
         control.add(pageList);
         control.add(next);
+        control.add(loadStatus);
         this.add(control, BorderLayout.SOUTH);
         prev.addActionListener(  
             new ActionListener()  {
@@ -118,12 +120,12 @@ public class Manga extends JFrame implements ActionListener {
                         //pane.setImage(attr);
                         actionListenerState=false;
                         pageList.removeAllItems();
-                        actionListenerState=true;
                         fillPages();
                         for (int count = 0; count < pageArray.length; count++){
                             System.out.println("Page " + (count+1));
                             pageList.addItem(pageInfo[count]);
                         }
+                        actionListenerState=true;
                         System.out.println("First pageList: " + pageList.getItemAt(0));
                         pane.waitForImage();
                         pane.callImage(0);
@@ -144,7 +146,6 @@ public class Manga extends JFrame implements ActionListener {
         pageList.addActionListener(  
             new ActionListener()  {
                 public void actionPerformed(ActionEvent e) {
-                    System.out.println(actionListenerState);
                     if(actionListenerState){
                         int index = pageList.getSelectedIndex();
                         System.out.println("Pages: " + pageArray.length + " Requested Index: " + (index+1));
@@ -191,10 +192,12 @@ public class Manga extends JFrame implements ActionListener {
                 for(int index=0;index < pages.size();index++){
                     pane.setImage(pages.get(index).attr("value"), index);
                     pane.waitForImage();
+                    loadStatus.setText((index+1)+"/"+pages.size() + " Pages Loaded");
                     if(!threadFlag){
                         break;
                     }
                 }
+                loadStatus.setText("Loading Complete!");
                 System.out.println("...fillPages finished");
             }
         });
