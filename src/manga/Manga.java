@@ -3,6 +3,7 @@
  * To change this template file, choose Tools | Templates
  * and open the template in the editor.
  */
+//
 package manga;
 
 import java.io.IOException;  
@@ -36,6 +37,22 @@ public class Manga extends JFrame implements ActionListener {
     public Manga(){
         this.setLayout(new BorderLayout());
         this.setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
+        addWindowListener(new WindowAdapter()
+        {
+            @Override
+            public void windowClosing(WindowEvent e)
+            {
+                try{
+                    threadFlag=false;
+                    imageThread.join();
+                    threadFlag=true;
+                    e.getWindow().dispose();
+                }
+                catch(Exception x){
+                    x.printStackTrace();
+                }
+            }
+        });
         this.setSize((int)GraphicsEnvironment.getLocalGraphicsEnvironment().getMaximumWindowBounds().getWidth(),(int)GraphicsEnvironment.getLocalGraphicsEnvironment().getMaximumWindowBounds().getHeight());
         JPanel control = new JPanel();
         JButton prev = new JButton("Previous");
@@ -52,10 +69,16 @@ public class Manga extends JFrame implements ActionListener {
             new ActionListener()  {
                 public void actionPerformed(ActionEvent e) {
                     int index = pageList.getSelectedIndex();
-                    if(pane.isImage(index-1)){
-                        pane.callImage(index-1);
-                        pageList.setSelectedIndex(index-1);
+                    if(index-1<0){
+                        chapterList.setSelectedIndex(chapterList.getSelectedIndex()+1);
                     }
+                    else{
+                        if(pane.isImage(index-1)){
+                            pane.callImage(index-1);
+                            pageList.setSelectedIndex(index-1);
+                        }
+                    }
+                    
                 }
             }
         );
@@ -64,10 +87,17 @@ public class Manga extends JFrame implements ActionListener {
             new ActionListener()  {
                 public void actionPerformed(ActionEvent e) {
                     int index = pageList.getSelectedIndex();
-                    if(pane.isImage(index+1)){
-                        pane.callImage(index+1);
-                        pageList.setSelectedIndex(index+1);
+                    System.out.println("Pages: " + pageArray.length + " Requested Index: " + (index+1));
+                    if(index+1>=pageArray.length){
+                        chapterList.setSelectedIndex(chapterList.getSelectedIndex()-1);
                     }
+                    else{
+                        if(pane.isImage(index+1)){
+                            pane.callImage(index+1);
+                            pageList.setSelectedIndex(index+1);
+                        }
+                    }
+                    
                 }
             }
                 
@@ -116,45 +146,15 @@ public class Manga extends JFrame implements ActionListener {
                 public void actionPerformed(ActionEvent e) {
                     System.out.println(actionListenerState);
                     if(actionListenerState){
-                        /*try{
-                            System.out.println("Web page selected :" + pageArray[pageList.getSelectedIndex()]);
-                            doc = Jsoup.connect(pageArray[pageList.getSelectedIndex()]).get();
-                            Element e1 = doc.select("img#comic_page").first();
-                            String attr = e1.attr("src");
-                            System.out.println(attr);
-                            pane.removeAll();
-                            //pane.setImage(attr);
-                            pane.waitForImage();
-                            Manga.this.revalidate();
-                            Manga.this.repaint();
+                        int index = pageList.getSelectedIndex();
+                        System.out.println("Pages: " + pageArray.length + " Requested Index: " + (index+1));
+                        if(pane.isImage(index)){
+                            pane.callImage(index);
                         }
-                        catch(IOException i){
-                            System.out.println("IO exception");
-                        }*/  
                     }
                 }
             }
         );
-    }
-    
-    public static int ratioWidth(int w, int h){
-        int rWidth;
-        float r;
-        if ( h > 968){
-            r = (float)968/h;
-        }
-        else if ( h < 968){
-            r = h/(float)968;
-        }
-        else{
-            r = 1;
-        }
-        rWidth = Math.round(w * r);
-        System.out.println("Height: " + h);
-        System.out.println("Computer's ratio: " + r);
-        System.out.println("Width: " + w);
-        System.out.println("New Width: " + rWidth);
-        return rWidth;
     }
     
     public static void fillChapters(){
@@ -232,11 +232,11 @@ public class Manga extends JFrame implements ActionListener {
                             if(!doc.select("table.chapters_list>tbody>tr:nth-child(" + ((searchResults.getSelectedIndex()*2)+2) + ")>td:nth-child(6)").text().equals("--"))
                             {
                                 String selectedManga = mangaInfo[1][searchResults.getSelectedIndex()];
-                                doc = Jsoup.connect(selectedManga).get();
+                                doc = Jsoup.connect(selectedManga).maxBodySize(0).get();
                                 String title = doc.title();
                                 System.out.println("Title is: " + title);
                                 if(!doc.select("tr.row.lang_English.chapter_row").html().equals("")){
-                                    System.out.println(doc.select("tr.row.lang_English.chapter_row").text());
+                                    System.out.println(doc.select("tr.row.lang_English.chapter_row").size());
                                     Element ele = doc.select("tr.row.lang_English.chapter_row").last();
                                     Elements row = ele.select("td>a");
                                     String attr = row.attr("href");
