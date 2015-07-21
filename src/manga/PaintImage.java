@@ -7,7 +7,6 @@ package manga;
 
 import java.awt.Color;
 import javax.swing.*;
-import java.io.IOException;
 import javax.imageio.ImageIO;
 import java.awt.Graphics;
 import java.awt.image.BufferedImage;
@@ -15,7 +14,6 @@ import java.net.URL;
 import org.jsoup.Jsoup;  
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
-import org.jsoup.select.Elements;
 
 public class PaintImage extends JPanel
 {
@@ -50,47 +48,6 @@ public class PaintImage extends JPanel
         System.out.println("Image Width with ratio applied: " + rWidth);*/
         return rWidth;
     }
-    
-    /*public void imageBuffer(Document doc, int pageCount){
-        Document page = doc;
-        images = new BufferedImage[pageCount];
-        imgBuffer = (new Thread()
-        {
-            @Override public void run()
-            {
-                try
-                {
-                    for(int tries = 0; tries<pageCount; tries++){
-                        int count = 0;
-                        Element el = page.select("div.moderation_bar.rounded.clear>ul>li>a>img").get(count);
-                        while(!el.attr("title").equals("Next Page") ){
-                            count++;
-                            el = page.select("div.moderation_bar.rounded.clear>ul>li>a>img").get(count);
-                            System.out.println(el.attr("title"));
-                        }
-                        el = el.parent();
-                        String l = el.attr("href");
-                        try{
-                            page = Jsoup.connect(l).get();
-                            Element e1 = page.select("img#comic_page").first();
-                            String attr = e1.attr("src");
-                            System.out.println(attr);
-                            URL url = new URL(attr);
-                            images[tries] = ImageIO.read(url);
-                        }
-                        catch(IOException i){
-                            System.out.println("IO exception");
-                        }
-                    }
-                }
-                catch (Exception e)
-                {
-                    e.printStackTrace();
-                }
-            }
-        });
-        imgBuffer.start();
-    }*/
 
     public void paintComponent(Graphics g)
     {
