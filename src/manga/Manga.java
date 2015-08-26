@@ -3,7 +3,7 @@
  * To change this template file, choose Tools | Templates
  * and open the template in the editor.
  */
-//
+
 package manga;
 
 import java.io.IOException;  
@@ -72,7 +72,12 @@ public class Manga extends JFrame implements ActionListener {
                 public void actionPerformed(ActionEvent e) {
                     int index = pageList.getSelectedIndex();
                     if(index-1<0){
-                        chapterList.setSelectedIndex(chapterList.getSelectedIndex()+1);
+                        if(chapterList.getSelectedIndex()==chapterList.getItemCount()-1){
+                            JOptionPane.showMessageDialog(null, "This is the first chapter.", "First Chapter", JOptionPane.INFORMATION_MESSAGE);
+                        }
+                        else{
+                            chapterList.setSelectedIndex(chapterList.getSelectedIndex()+1);
+                        }
                     }
                     else{
                         if(pane.isImage(index-1)){
@@ -91,18 +96,21 @@ public class Manga extends JFrame implements ActionListener {
                     int index = pageList.getSelectedIndex();
                     System.out.println("Pages: " + pageArray.length + " Requested Index: " + (index+1));
                     if(index+1>=pageArray.length){
-                        chapterList.setSelectedIndex(chapterList.getSelectedIndex()-1);
+                        if(chapterList.getSelectedIndex()==0){
+                            JOptionPane.showMessageDialog(null, "This is the latest chapter.", "Last Chapter", JOptionPane.INFORMATION_MESSAGE);
+                        }
+                        else{
+                            chapterList.setSelectedIndex(chapterList.getSelectedIndex()-1);
+                        }
                     }
                     else{
                         if(pane.isImage(index+1)){
                             pane.callImage(index+1);
                             pageList.setSelectedIndex(index+1);
                         }
-                    }
-                    
+                    }  
                 }
-            }
-                
+            }      
         );
         chapterList.addActionListener(  
             new ActionListener()  {
@@ -152,6 +160,8 @@ public class Manga extends JFrame implements ActionListener {
                         if(pane.isImage(index)){
                             pane.callImage(index);
                         }
+                        Manga.this.revalidate();
+                        Manga.this.repaint();
                     }
                 }
             }
@@ -218,6 +228,7 @@ public class Manga extends JFrame implements ActionListener {
         main.setLayout(new BorderLayout());
         main.setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
         main.setSize(640, 480);
+        main.setLocationRelativeTo(null);
         JPanel search = new JPanel();
         JTextField searchInput = new JTextField();
         searchInput.setColumns(35);

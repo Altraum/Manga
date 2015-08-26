@@ -31,21 +31,13 @@ public class PaintImage extends JPanel
         int imageW = image.getWidth();
         windowH = super.getHeight();
         float r;
-        if ( imageH > windowH){
-            r = (float)windowH/imageH;
-        }
-        else if ( imageH < windowH){
-            r = imageH/(float)windowH;
-        }
-        else{
-            r = 1;
-        }
+        r = (float)windowH/imageH;
         rWidth = Math.round(imageW * r);
-        /*System.out.println("Image Height: " + imageH);
+        System.out.println("Image Height: " + imageH);
         System.out.println("Window Height: " + windowH);
         System.out.println("Computer's ratio: " + r);
         System.out.println("Image Width: " + imageW);
-        System.out.println("Image Width with ratio applied: " + rWidth);*/
+        System.out.println("Image Width with ratio applied: " + rWidth);
         return rWidth;
     }
 
@@ -54,7 +46,6 @@ public class PaintImage extends JPanel
         g.setColor(Color.BLACK);
         g.fillRect(0,0,getWidth(),getHeight());
         g.drawImage(image, (getWidth()/2)-(imgResize()/2), 0, imgResize(), windowH, this);
-        repaint();
     }
 
     public void setImage (String imgUrl, int index){
