@@ -4,6 +4,7 @@
  * and open the template in the editor.
  */
 
+
 package manga;
 
 import java.io.IOException;  
@@ -16,25 +17,31 @@ import java.awt.event.*;
 import javax.swing.*;
 import java.awt.image.BufferedImage;
 import java.awt.GraphicsEnvironment;
+import java.io.File;
+import static manga.Profile.*;
 
 public class Manga extends JFrame implements ActionListener {
     
     public static Document doc = null;
     public static Document buffer = null;
     public static PaintImage pane = new PaintImage();
-    public static String[] chapterArray;
-    public static String[] pageArray;
-    public static String[] chapterInfo;
-    public static String[] pageInfo;
-    public static JComboBox chapterList;
-    public static JComboBox pageList;
+    public static JPanel control = new JPanel();
+    public static String[] chapterURLArray;
+    public static String[] pageURLArray;
+    public static String[] chapterNameArray;
+    public static String[] pageNameArray;
+    public static JComboBox chapterComboBox;
+    public static JComboBox pageComboBox;
     public static JLabel loadStatus = new JLabel("Unset");
     public static DefaultListModel listmodel = new DefaultListModel();
     public static JList searchResults = new JList(listmodel);
+    public static DefaultListModel favoritesModel = new DefaultListModel();
     public static boolean actionListenerState = true;
     public static boolean threadFlag = true;
     public static BufferedImage image;
     public static Thread imageThread;
+    public static JButton favBtn = new JButton("Add to Favorites");
+    public static JButton currentBtn = new JButton("Set Current Chapter");
     public Manga(){
         this.setLayout(new BorderLayout());
         this.setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
@@ -55,34 +62,34 @@ public class Manga extends JFrame implements ActionListener {
             }
         });
         this.setSize((int)GraphicsEnvironment.getLocalGraphicsEnvironment().getMaximumWindowBounds().getWidth(),(int)GraphicsEnvironment.getLocalGraphicsEnvironment().getMaximumWindowBounds().getHeight());
-        JPanel control = new JPanel();
+        
         JButton prev = new JButton("Previous");
         JButton next = new JButton ("Next");
-        chapterList = new JComboBox(chapterInfo);
-        chapterList.setSelectedIndex(chapterList.getItemCount()-1);
-        pageList = new JComboBox(pageInfo);
+        
+        chapterComboBox = new JComboBox(chapterNameArray);
+        chapterComboBox.setSelectedIndex(chapterComboBox.getItemCount()-1);
+        pageComboBox = new JComboBox(pageNameArray);
         control.add(prev);
-        control.add(chapterList);
-        control.add(pageList);
+        control.add(chapterComboBox);
+        control.add(pageComboBox);
         control.add(next);
         control.add(loadStatus);
         this.add(control, BorderLayout.SOUTH);
-        prev.addActionListener(  
-            new ActionListener()  {
+        prev.addActionListener(new ActionListener()  {
                 public void actionPerformed(ActionEvent e) {
-                    int index = pageList.getSelectedIndex();
+                    int index = pageComboBox.getSelectedIndex();
                     if(index-1<0){
-                        if(chapterList.getSelectedIndex()==chapterList.getItemCount()-1){
+                        if(chapterComboBox.getSelectedIndex()==chapterComboBox.getItemCount()-1){
                             JOptionPane.showMessageDialog(null, "This is the first chapter.", "First Chapter", JOptionPane.INFORMATION_MESSAGE);
                         }
                         else{
-                            chapterList.setSelectedIndex(chapterList.getSelectedIndex()+1);
+                            chapterComboBox.setSelectedIndex(chapterComboBox.getSelectedIndex()+1);
                         }
                     }
                     else{
                         if(pane.isImage(index-1)){
                             pane.callImage(index-1);
-                            pageList.setSelectedIndex(index-1);
+                            pageComboBox.setSelectedIndex(index-1);
                         }
                     }
                     
@@ -90,55 +97,101 @@ public class Manga extends JFrame implements ActionListener {
             }
         );
         
-        next.addActionListener(  
-            new ActionListener()  {
+        next.addActionListener(new ActionListener()  {
                 public void actionPerformed(ActionEvent e) {
-                    int index = pageList.getSelectedIndex();
-                    System.out.println("Pages: " + pageArray.length + " Requested Index: " + (index+1));
-                    if(index+1>=pageArray.length){
-                        if(chapterList.getSelectedIndex()==0){
+                    int index = pageComboBox.getSelectedIndex();
+                    System.out.println("Pages: " + pageURLArray.length + " Requested Index: " + (index+1));
+                    if(index+1>=pageURLArray.length){
+                        if(chapterComboBox.getSelectedIndex()==0){
                             JOptionPane.showMessageDialog(null, "This is the latest chapter.", "Last Chapter", JOptionPane.INFORMATION_MESSAGE);
                         }
                         else{
-                            chapterList.setSelectedIndex(chapterList.getSelectedIndex()-1);
+                            chapterComboBox.setSelectedIndex(chapterComboBox.getSelectedIndex()-1);
+                            if(!hasReadBefore(Manga.this.getTitle(), (String)chapterURLArray[chapterComboBox.getSelectedIndex()])){
+                                updateMangaFromDB(Manga.this.getTitle(), (String)chapterComboBox.getSelectedItem(), (String)chapterURLArray[chapterComboBox.getSelectedIndex()]);
+                                addChapterToDB(Manga.this.getTitle(), (String)chapterURLArray[chapterComboBox.getSelectedIndex()]);
+                            }
+                            
                         }
                     }
                     else{
                         if(pane.isImage(index+1)){
                             pane.callImage(index+1);
-                            pageList.setSelectedIndex(index+1);
+                            pageComboBox.setSelectedIndex(index+1);
                         }
                     }  
                 }
             }      
         );
-        chapterList.addActionListener(  
-            new ActionListener()  {
+        
+        favBtn.addActionListener(new ActionListener()  {
+                public void actionPerformed(ActionEvent e) {
+                    if(hasFavoritedBefore(Manga.this.getTitle())){
+                        JOptionPane.showMessageDialog(null, "This manga is already in your favorites.", "Already Favorited", JOptionPane.INFORMATION_MESSAGE);
+                    }
+                    else{
+                        addMangaToDB(Manga.this.getTitle(), (String)chapterComboBox.getSelectedItem(), chapterURLArray[chapterComboBox.getSelectedIndex()]);
+                        for(int i =chapterComboBox.getSelectedIndex();i<chapterURLArray.length;i++){
+                            addChapterToDB(Manga.this.getTitle(), chapterURLArray[i]);
+                        }
+                        favoritesModel.removeAllElements();
+                        fillModel(favoritesModel);
+                        control.remove(favBtn);
+                        control.add(currentBtn);
+                    }
+                    
+                }
+            }
+        );
+        
+        currentBtn.addActionListener(new ActionListener()  {
+                public void actionPerformed(ActionEvent e) {
+                    if(getCurrentChapterURLFromDB(Manga.this.getTitle()).equals(chapterURLArray[chapterComboBox.getSelectedIndex()])){
+                        JOptionPane.showMessageDialog(null, "This is set as your current chapter.", "Already Current", JOptionPane.INFORMATION_MESSAGE);
+                    }
+                    else{
+                        updateMangaFromDB(Manga.this.getTitle(), (String)chapterComboBox.getSelectedItem(), chapterURLArray[chapterComboBox.getSelectedIndex()]);
+                        flushReadChapters(Manga.this.getTitle());
+                        for(int i =chapterComboBox.getItemCount()-1;!getCurrentChapterURLFromDB(Manga.this.getTitle()).equals(chapterURLArray[i]);i--){
+                            addChapterToDB(Manga.this.getTitle(), chapterURLArray[i]);
+                        }
+                        addChapterToDB(Manga.this.getTitle(),chapterURLArray[chapterComboBox.getSelectedIndex()]);
+                        favoritesModel.removeAllElements();
+                        fillModel(favoritesModel);
+                    }
+                    
+                }
+            }
+        );
+        
+        chapterComboBox.addActionListener(new ActionListener()  {
                 public void actionPerformed(ActionEvent e) {
                     try{
-                        threadFlag=false;
-                        imageThread.join();
-                        threadFlag=true;
-                        System.out.println("Web page selected :" + chapterArray[chapterList.getSelectedIndex()]);
-                        doc = Jsoup.connect(chapterArray[chapterList.getSelectedIndex()]).get();
-                        Element e1 = doc.select("img#comic_page").first();
-                        String attr = e1.attr("src");
-                        System.out.println(attr);
-                        pane.removeAll();
-                        //pane.setImage(attr);
-                        actionListenerState=false;
-                        pageList.removeAllItems();
-                        fillPages();
-                        for (int count = 0; count < pageArray.length; count++){
-                            System.out.println("Page " + (count+1));
-                            pageList.addItem(pageInfo[count]);
+                        if(actionListenerState){
+                            threadFlag=false;
+                            imageThread.join();
+                            threadFlag=true;
+                            System.out.println("Web page selected :" + chapterURLArray[chapterComboBox.getSelectedIndex()]);
+                            doc = Jsoup.connect(chapterURLArray[chapterComboBox.getSelectedIndex()]).get();
+                            Element e1 = doc.select("img#comic_page").first();
+                            String attr = e1.attr("src");
+                            System.out.println(attr);
+                            pane.removeAll();
+                            //pane.setImage(attr);
+                            actionListenerState=false;
+                            pageComboBox.removeAllItems();
+                            fillPages(doc);
+                            for (int count = 0; count < pageURLArray.length; count++){
+                                System.out.println("Page " + (count+1));
+                                pageComboBox.addItem(pageNameArray[count]);
+                            }
+                            actionListenerState=true;
+                            System.out.println("First pageList: " + pageComboBox.getItemAt(0));
+                            pane.waitForImage();
+                            pane.callImage(0);
+                            Manga.this.revalidate();
+                            Manga.this.repaint();
                         }
-                        actionListenerState=true;
-                        System.out.println("First pageList: " + pageList.getItemAt(0));
-                        pane.waitForImage();
-                        pane.callImage(0);
-                        Manga.this.revalidate();
-                        Manga.this.repaint();
                     }
                     catch(IOException i){
                         System.out.println("IO exception");
@@ -146,17 +199,17 @@ public class Manga extends JFrame implements ActionListener {
                     catch(InterruptedException x){
                         System.out.println("Interrupted exception");
                     }
-                    int index = pageList.getSelectedIndex();
-                    pageList.setSelectedIndex(index);
+                    int index = pageComboBox.getSelectedIndex();
+                    pageComboBox.setSelectedIndex(index);
                 }
             }
         );
-        pageList.addActionListener(  
-            new ActionListener()  {
+        
+        pageComboBox.addActionListener(new ActionListener()  {
                 public void actionPerformed(ActionEvent e) {
                     if(actionListenerState){
-                        int index = pageList.getSelectedIndex();
-                        System.out.println("Pages: " + pageArray.length + " Requested Index: " + (index+1));
+                        int index = pageComboBox.getSelectedIndex();
+                        System.out.println("Pages: " + pageURLArray.length + " Requested Index: " + (index+1));
                         if(pane.isImage(index)){
                             pane.callImage(index);
                         }
@@ -168,34 +221,34 @@ public class Manga extends JFrame implements ActionListener {
         );
     }
     
-    public static void fillChapters(){
+    public static void fillChapters(Document doc){
         System.out.print("fillChapter start...");
         Element cssParse = doc.select("div.moderation_bar.rounded.clear>ul>li>select[name=chapter_select]").first();
         Elements chapters = cssParse.select("option");
         int index = 0;
-        chapterArray = new String[chapters.size()];
-        chapterInfo = new String[chapters.size()];
+        chapterURLArray = new String[chapters.size()];
+        chapterNameArray = new String[chapters.size()];
         while(index < chapters.size()){
             System.out.print("Method start " + (index +1) + ": ");
-            chapterArray[index] = (chapters.get(index).attr("value"));
-            chapterInfo[index] = (chapters.get(index).text());
-            System.out.println(chapterArray[index]);
+            chapterURLArray[index] = (chapters.get(index).attr("value"));
+            chapterNameArray[index] = (chapters.get(index).text());
+            System.out.println(chapterURLArray[index]);
             index++;
         }
         System.out.println("...fillChapters finished");
-        fillPages();
+        fillPages(doc);
     }
     
-    public static void fillPages(){
+    public static void fillPages(Document doc){
         System.out.print("fillPages start...");
         Element cssParse = doc.select("div.moderation_bar.rounded.clear>ul>li>select[name=page_select]").first();
         Elements pages = cssParse.select("option");
-        pageArray = new String[pages.size()];
-        pageInfo = new String[pages.size()];
+        pageURLArray = new String[pages.size()];
+        pageNameArray = new String[pages.size()];
         pane.setImageCount(pages.size());
         for(int index=0;index < pages.size();index++){
-            pageArray[index] = (pages.get(index).attr("value"));
-            pageInfo[index] = (pages.get(index).text());
+            pageURLArray[index] = (pages.get(index).attr("value"));
+            pageNameArray[index] = (pages.get(index).text());
         }
         imageThread = (new Thread() {
             public void run() {
@@ -221,14 +274,24 @@ public class Manga extends JFrame implements ActionListener {
     
 
     public static void main(String[] args)throws IOException {
+        File dbFile = new File("MangaProfile.mdb");
+        if(!dbFile.isFile()){
+            createDB();
+        }
         String[][] mangaInfo = new String[2][30];
         JScrollPane scrollPane = new JScrollPane(searchResults, JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED, JScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED);
         scrollPane.setVisible(false);
-        JFrame main = new JFrame();
+        JFrame start = new JFrame();
+        start.setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
+        start.setSize(640, 480);
+        start.setLocationRelativeTo(null);
+        start.setTitle("Manga Viewer");
+        JPanel main = new JPanel();
         main.setLayout(new BorderLayout());
-        main.setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
-        main.setSize(640, 480);
-        main.setLocationRelativeTo(null);
+        JPanel profile = new JPanel();
+        JTabbedPane tabbedPane = new JTabbedPane();
+        tabbedPane.addTab("Search", main);
+        tabbedPane.addTab("Favorites", profile);
         JPanel search = new JPanel();
         JTextField searchInput = new JTextField();
         searchInput.setColumns(35);
@@ -260,10 +323,17 @@ public class Manga extends JFrame implements ActionListener {
                                     row = ele.select("td>a");
                                     attr = row.attr("href");
                                     doc = Jsoup.connect(attr).get();
-                                    fillChapters();
+                                    fillChapters(doc);
                                     Manga window = new Manga();
                                     pane.waitForImage();
                                     pane.callImage(0);
+                                    window.setTitle(mangaInfo[0][searchResults.getSelectedIndex()]);
+                                    if(hasFavoritedBefore(window.getTitle())){
+                                        control.add(currentBtn);
+                                    }
+                                    else{
+                                        control.add(favBtn);
+                                    }
                                     window.add(pane, BorderLayout.CENTER);
                                     window.setVisible(true);
                                 }
@@ -319,6 +389,64 @@ public class Manga extends JFrame implements ActionListener {
             }
         );
         main.add(search, BorderLayout.NORTH);
-        main.setVisible(true);
+        
+        profile.setLayout(new BorderLayout());
+        
+        JList favorites = new JList(favoritesModel);
+        fillModel(favoritesModel);
+        profile.add(favorites, BorderLayout.CENTER);
+        JPanel buttonPanel = new JPanel();
+        profile.add(buttonPanel, BorderLayout.SOUTH);
+        JButton continueBtn = new JButton("Select");
+        continueBtn.addActionListener(new ActionListener()  {
+                public void actionPerformed(ActionEvent e) {
+                    try{
+                        if(favorites.getSelectedIndex() != -1){
+                            String url = selectMangaFromDB((String)favorites.getSelectedValue());
+                            Document doc = Jsoup.connect(url).get();
+                            fillChapters(doc);
+                            Manga window = new Manga();
+                            
+                            window.setTitle((String)favorites.getSelectedValue());
+                            control.add(currentBtn);
+                            actionListenerState=false;
+                            chapterComboBox.setSelectedItem(selectChapterFromDB(window.getTitle()));
+                            actionListenerState=true;
+                            pane.waitForImage();
+                            pane.callImage(0);
+                            window.add(pane, BorderLayout.CENTER);
+                            window.setVisible(true);
+                        }
+                        
+                        else{
+                            JOptionPane.showMessageDialog(null, "Please choose a manga from your Favorites.", "No Manga Selected", JOptionPane.INFORMATION_MESSAGE);
+                        }
+                    }
+                    
+                    catch(IOException i){
+                        JOptionPane.showMessageDialog(null, "Connection Lost. Please try again.", "No Connection", JOptionPane.INFORMATION_MESSAGE);
+                    }
+                }
+            }
+        );
+        buttonPanel.add(continueBtn);
+        JButton deleteBtn = new JButton("Remove");
+        deleteBtn.addActionListener(new ActionListener()  {
+                public void actionPerformed(ActionEvent e) {
+                    if(favorites.getSelectedIndex() != -1){
+                        deleteMangaFromDB((String)favorites.getSelectedValue());
+                        favoritesModel.removeAllElements();
+                        fillModel(favoritesModel);
+                    }
+
+                    else{
+                        JOptionPane.showMessageDialog(null, "Please choose a manga from your Favorites.", "No Manga Selected", JOptionPane.INFORMATION_MESSAGE);
+                    }
+                }
+            }
+        );
+        buttonPanel.add(deleteBtn);
+        start.add(tabbedPane);
+        start.setVisible(true);
     }
 }

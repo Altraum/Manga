@@ -33,11 +33,11 @@ public class PaintImage extends JPanel
         float r;
         r = (float)windowH/imageH;
         rWidth = Math.round(imageW * r);
-        System.out.println("Image Height: " + imageH);
+        /*System.out.println("Image Height: " + imageH);
         System.out.println("Window Height: " + windowH);
         System.out.println("Computer's ratio: " + r);
         System.out.println("Image Width: " + imageW);
-        System.out.println("Image Width with ratio applied: " + rWidth);
+        System.out.println("Image Width with ratio applied: " + rWidth);*/
         return rWidth;
     }
 
